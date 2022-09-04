@@ -1,6 +1,9 @@
 <template>
   <div class="containers">
-    <div class="canvas" ref="canvas"></div>
+    <div ref="content" class="content with-diagram">
+      <div class="canvas" ref="canvas"></div>
+      <div id="js-properties-panel" class="panel"></div>
+    </div>
 
     <ul class="buttons">
       <li>
@@ -48,6 +51,24 @@
 import BpmnModeler from "bpmn-js/lib/Modeler";
 import { xmlStr } from "../mock/xmlStr";
 import is from "bpmn-js/lib/util/ModelUtil";
+import "bpmn-js-properties-panel/dist/assets/properties-panel.css"; // 右边工具栏样式
+// 这里引入的是右侧属性栏这个框
+import {
+  BpmnPropertiesPanelModule,
+  BpmnPropertiesProviderModule,
+  // use Camunda Platform properties provider
+  CamundaPlatformPropertiesProviderModule
+} from "bpmn-js-properties-panel";
+// 一个描述的json
+import camundaModdleDescriptor from "camunda-bpmn-moddle/resources/camunda";
+import camundaPlatformBehaviors from "camunda-bpmn-js-behaviors/lib/camunda-platform";
+
+// BPMN国际化
+import customTranslate from "./resource/customTranslate";
+// 自定义汉化模块
+var customTranslateModule = {
+  translate: ["value", customTranslate]
+};
 
 export default {
   name: "ops-coffee",
@@ -66,7 +87,23 @@ export default {
     init() {
       const canvas = this.$refs.canvas;
       this.bpmnModeler = new BpmnModeler({
-        container: canvas
+        container: canvas,
+        //添加控制板
+        propertiesPanel: {
+          parent: "#js-properties-panel"
+        },
+        additionalModules: [
+          BpmnPropertiesPanelModule,
+          BpmnPropertiesProviderModule,
+          CamundaPlatformPropertiesProviderModule,
+          camundaPlatformBehaviors,
+          // 国际化
+          customTranslateModule
+        ],
+        moddleExtensions: {
+          //如果要在属性面板中维护camunda：XXX属性，则需要此
+          camunda: camundaModdleDescriptor
+        }
       });
 
       this.createNewDiagram();
@@ -207,6 +244,11 @@ export default {
 </script>
 
 <style scoped>
+.content {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
 .containers {
   width: 100%;
   height: calc(100vh - 60px);
@@ -231,5 +273,27 @@ export default {
   padding: 8px;
   border: 1px solid #ccc;
   text-decoration: none;
+}
+/* line 119, styles/app.less */
+.panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 260px;
+  z-index: 10;
+  border-left: 1px solid #ccc;
+  overflow: auto;
+}
+
+/* line 128, styles/app.less */
+.panel:empty {
+  display: none;
+}
+
+/* line 131, styles/app.less */
+.panel > .djs-properties-panel {
+  padding-bottom: 70px;
+  min-height: 100%;
 }
 </style>
